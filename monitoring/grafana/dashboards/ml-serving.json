@@ -1,0 +1,62 @@
+{
+  "uid": "axiom-ml-serving",
+  "title": "AXIOM ML — Serving & Performance",
+  "tags": ["axiom", "mlops"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": { "from": "now-15m", "to": "now" },
+  "templating": { "list": [] },
+  "annotations": { "list": [] },
+  "panels": [
+    {
+      "id": 1, "type": "stat", "title": "Predictions served (total)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 0 },
+      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "green" } }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [ { "refId": "A", "expr": "axiom_ml_predictions_total", "datasource": { "type": "prometheus", "uid": "prometheus" } } ]
+    },
+    {
+      "id": 2, "type": "stat", "title": "Deployed model MAE (years)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 0 },
+      "fieldConfig": { "defaults": { "decimals": 2, "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "orange", "value": 3 }, { "color": "red", "value": 5 } ] } }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [ { "refId": "A", "expr": "axiom_ml_model_mae", "datasource": { "type": "prometheus", "uid": "prometheus" } } ]
+    },
+    {
+      "id": 3, "type": "stat", "title": "Mean predicted age",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 0 },
+      "fieldConfig": { "defaults": { "decimals": 1, "unit": "short", "color": { "mode": "fixed", "fixedColor": "blue" } }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [ { "refId": "A", "expr": "rate(axiom_ml_predicted_age_sum[5m]) / clamp_min(rate(axiom_ml_predicted_age_count[5m]), 1)", "datasource": { "type": "prometheus", "uid": "prometheus" } } ]
+    },
+    {
+      "id": 4, "type": "timeseries", "title": "Prediction rate (req/s)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 4 },
+      "fieldConfig": { "defaults": { "custom": { "drawStyle": "line", "fillOpacity": 15 }, "unit": "reqps" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "single" } },
+      "targets": [ { "refId": "A", "expr": "rate(axiom_ml_predictions_total[1m])", "legendFormat": "predictions", "datasource": { "type": "prometheus", "uid": "prometheus" } } ]
+    },
+    {
+      "id": 5, "type": "timeseries", "title": "Prediction latency p95 (s)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 4 },
+      "fieldConfig": { "defaults": { "custom": { "drawStyle": "line", "fillOpacity": 10 }, "unit": "s" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "single" } },
+      "targets": [ { "refId": "A", "expr": "histogram_quantile(0.95, sum by (le) (rate(axiom_ml_prediction_seconds_bucket[5m])))", "legendFormat": "p95", "datasource": { "type": "prometheus", "uid": "prometheus" } } ]
+    },
+    {
+      "id": 6, "type": "timeseries", "title": "Requests by status",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 13 },
+      "fieldConfig": { "defaults": { "custom": { "drawStyle": "line", "fillOpacity": 10 }, "unit": "reqps" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [ { "refId": "A", "expr": "sum by (status) (rate(axiom_ml_requests_total[1m]))", "legendFormat": "{{status}}", "datasource": { "type": "prometheus", "uid": "prometheus" } } ]
+    }
+  ]
+}

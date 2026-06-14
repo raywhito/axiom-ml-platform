@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-and-train:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run unit tests
+        run: pytest -q tests
+
+      - name: Train model (smoke)
+        run: python src/train.py
+
+      - name: Check model quality gate
+        run: |
+          python - <<'PY'
+          import json
+          m = json.load(open("models/metrics.json"))
+          print("metrics:", m)
+          assert m["mae"] < 4.0, f"MAE too high: {m['mae']}"
+          assert m["r2"] > 0.6, f"R2 too low: {m['r2']}"
+          print("Quality gate passed.")
+          PY
+
+      - name: Upload model artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: model
+          path: |
+            models/model.joblib
+            models/metrics.json

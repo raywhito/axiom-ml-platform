@@ -1,0 +1,44 @@
+name: CD
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/axiom-ml:latest
+            ghcr.io/${{ github.repository_owner }}/axiom-ml:${{ github.sha }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # In a real cluster this step applies the manifests, e.g.:
+      #   - uses: azure/setup-kubectl@v4
+      #   - run: kubectl apply -f k8s/
+      - name: Deploy (placeholder)
+        run: echo "kubectl apply -f k8s/  # rollout axiom-ml-api to the cluster"
